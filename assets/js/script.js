@@ -249,3 +249,56 @@ srtop.reveal('.experience .timeline .container', { interval: 400 });
 /* SCROLL CONTACT */
 srtop.reveal('.contact .container', { delay: 400 });
 srtop.reveal('.contact .container .form-group', { delay: 400 });
+
+const GITHUB_USERNAME = "your-github-username"; // Replace with your GitHub username
+const GITHUB_TOKEN = "your-personal-access-token"; // Replace with your GitHub token
+
+async function fetchPinnedProjects() {
+    const query = `
+    {
+        user(login: "${GITHUB_USERNAME}") {
+            pinnedItems(first: 6, types: REPOSITORY) {
+                nodes {
+                    ... on Repository {
+                        name
+                        description
+                        url
+                        stargazerCount
+                        forkCount
+                    }
+                }
+            }
+        }
+    }`;
+
+    const response = await fetch("https://api.github.com/graphql", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${GITHUB_TOKEN}`,
+        },
+        body: JSON.stringify({ query }),
+    });
+
+    const data = await response.json();
+    return data.data.user.pinnedItems.nodes;
+}
+
+async function displayPinnedProjects() {
+    const projects = await fetchPinnedProjects();
+    const projectsContainer = document.querySelector("#projects-container");
+
+    projects.forEach((project) => {
+        const projectHTML = `
+        <div class="box tilt">
+            <h3>${project.name}</h3>
+            <p>${project.description || "No description available."}</p>
+            <p>⭐ ${project.stargazerCount} | 🍴 ${project.forkCount}</p>
+            <a href="${project.url}" target="_blank" class="btn">View on GitHub</a>
+        </div>`;
+        projectsContainer.innerHTML += projectHTML;
+    });
+}
+
+// Call the function to display projects
+displayPinnedProjects();
